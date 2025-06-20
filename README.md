@@ -61,4 +61,9 @@ The correlation coefficient between sentiment and closing price is -0.15, indica
 - As one of the largest banks in the world, JPMorgan Chase's stock tends to be more stable due to its large market capitalization.
 - Social media sentiment alone may not be a strong predictor of stock performance for large financial institutions. A comprehensive market analysis should combine sentiment data with other financial and macroeconomic indicators.
   
-THE END.
+---
+
+**Version:** 1.1.0
+
+**Contact:** Nguyễn Thị Lan Anh ([lananh2004@gmail.com](lananh2004@gmail.com))
+
