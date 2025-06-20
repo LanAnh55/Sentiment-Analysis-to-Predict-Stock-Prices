@@ -1,0 +1,163 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import yfinance as yf
+import praw
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+from textblob import TextBlob
+import logging
+from datetime import datetime, timedelta
+import matplotlib.dates as mdates
+from tqdm import tqdm
+
+
+stock = "JPM"  
+ticker = yf.Ticker(stock)
+hists = {
+    stock: ticker.history(start="2023-06-01", end="2024-01-01") 
+}
+
+temp_df = hists[stock].copy()
+
+fig = go.Figure(
+    data=[
+        go.Candlestick(
+            x=temp_df.index,
+            open=temp_df["Open"],
+            high=temp_df["High"],
+            low=temp_df["Low"],
+            close=temp_df["Close"],
+        )
+    ]
+)
+
+fig.update_layout(
+    margin=dict(l=20, r=20, t=60, b=20),
+    height=300,
+    paper_bgcolor="LightSteelBlue",
+    title= "JPM",
+)
+
+fig.show()
+
+
+
+# Log In to App: 
+reddit = praw.Reddit(client_id='LchMksVUmRUeyg', client_secret='gb1XyXX-r0ycV9KKFM-ujFVNOogO_w', user_agent='Data Scraping')
+
+# Initialize Reddit client with your credentials
+reddit = praw.Reddit(
+    client_id="LchMksVUmRUeyg",
+    client_secret="gb1XyXX-r0ycV9KKFM-ujFVNOogO_w",
+    user_agent="Data Scraping"
+)
+
+# Define your query
+query = "stock market"
+
+# Define the subreddit to search
+subreddit = reddit.subreddit("all")  # You can specify a subreddit, e.g., "wallstreetbets"
+
+# Fetch submissions related to your query
+posts = []
+for submission in subreddit.search(query, limit=100):  # Limiting to 100 posts
+    posts.append([submission.created_utc, submission.id, submission.title, submission.selftext])
+
+# Convert the list of posts to a DataFrame
+reddit_df = pd.DataFrame(posts, columns=["Date", "Post ID", "Title", "Content"])
+
+# Display the DataFrame
+print(reddit_df.head())
+
+
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+try:
+    # Initialize Reddit client with your credentials
+    reddit = praw.Reddit(
+        client_id="LchMksVUmRUeyg",
+        client_secret="gb1XyXX-r0ycV9KKFM-ujFVNOogO_w",
+        user_agent="Data Scraping"
+    )
+    logging.info("Successfully connected to Reddit API")
+
+    # Define subreddit and keywords for search
+    subreddit = reddit.subreddit("stocks")
+    queries = ["JPM earnings", "JPM stock price", "JPM financial results", "JPM revenue", "JPM financial news", "JPM", "JPMorgan Chase"]
+
+    # Collect data from Reddit posts
+    posts = []
+    for query in queries:
+        for submission in tqdm(subreddit.search(query, limit=100), total=100):
+            posts.append([submission.created_utc, submission.id, submission.title, submission.selftext])
+    
+    logging.info(f"Collected {len(posts)} posts from Reddit")
+
+    if not posts:
+        raise ValueError("No posts found on Reddit. Check your queries.")
+
+    reddit_df = pd.DataFrame(posts, columns=["Date", "Post Id", "Title", "Content"])
+    reddit_df['Date'] = pd.to_datetime(reddit_df['Date'], unit='s')
+    logging.info(f"Reddit DataFrame size: {reddit_df.shape}")
+
+    # Function to calculate sentiment
+    def get_sentiment(text):
+        return TextBlob(text).sentiment.polarity
+
+    # Calculate sentiment for the posts
+    reddit_df['sentiment'] = reddit_df.apply(lambda row: get_sentiment(row["Title"] + " " + row["Content"]), axis=1)
+
+    logging.info("Completed sentiment calculation")
+
+    # Plot sentiment score distribution
+    plt.figure(figsize=(15, 5))
+    reddit_df["sentiment"].hist(bins=50)
+    plt.title("Sentiment distribution")
+    plt.xlabel("Sentiment scores")
+    plt.ylabel("Reddit posts")
+    plt.show()
+
+    reddit_df["Date"] = reddit_df["Date"].dt.date
+    sent_daily = reddit_df.groupby("Date")["sentiment"].mean()
+
+    # Collect company financial data
+    stock = yf.Ticker("AAPL")
+    hist = stock.history(start=sent_daily.index.min(), end=sent_daily.index.max())
+    hist = hist.reset_index()
+    hist["Date"] = hist["Date"].dt.date
+    hist = hist.set_index("Date")
+
+    sent_and_stock = sent_daily.to_frame("sentiment").merge(
+        hist, left_index=True, right_index=True
+    )
+
+    # Plot sentiment vs stock price
+    fig, ax1 = plt.subplots(figsize=(20, 7))
+
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Sentiment', color='tab:blue')
+    ax1.plot(sent_and_stock.index, sent_and_stock["sentiment"], color='tab:blue', label='Sentiment')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Closing price', color='tab:orange')
+    ax2.plot(sent_and_stock.index, sent_and_stock["Close"], color='tab:orange', label='Closing price')
+    ax2.tick_params(axis='y', labelcolor='tab:orange')
+
+    fig.tight_layout()
+    plt.title('Sentiment vs Closing price')
+    fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
+    plt.show()
+
+    # Correlation analysis
+    correlation = sent_and_stock["sentiment"].corr(sent_and_stock["Close"])
+    logging.info(f"Correlation coefficient between Sentiment and Closing price: {correlation:.2f}")
+
+except Exception as e:
+    logging.error(f"An error occurred: {str(e)}")
+
+finally:
+    logging.info("Script has ended")
