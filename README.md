@@ -47,16 +47,18 @@ Emotions drive customer behavior, sentiment analysis on customer feedback forms 
 
 In this case:
 
-Correlation Analysis
+1. Correlation Analysis
 The correlation coefficient between sentiment and closing price is -0.15, indicating a weak negative correlation.
 
 => Suggests a complex, non-straightforward relationship between public sentiment and stock prices for large corporations
 
-Stock Price Trends vs Sentiment Volatility
-The stock price (orange line) shows a clear upward trend over time, particularly accelerating from 2020 onwards.
-Sentiment scores (blue line) are highly volatile, with frequent and sharp fluctuations.
+2. Stock Price Trends vs Sentiment Volatility
+- The stock price (orange line) shows a clear upward trend over time, particularly accelerating from 2020 onwards.
+- Sentiment scores (blue line) are highly volatile, with frequent and sharp fluctuations.
+  
 **Key Takeaways**
-The relationship between public sentiment and stock prices for major corporations is complex and not straightforward.
-As one of the largest banks in the world, JPMorgan Chase's stock tends to be more stable due to its large market capitalization.
-Social media sentiment alone may not be a strong predictor of stock performance for large financial institutions. A comprehensive market analysis should combine sentiment data with other financial and macroeconomic indicators.
+- The relationship between public sentiment and stock prices for major corporations is complex and not straightforward.
+- As one of the largest banks in the world, JPMorgan Chase's stock tends to be more stable due to its large market capitalization.
+- Social media sentiment alone may not be a strong predictor of stock performance for large financial institutions. A comprehensive market analysis should combine sentiment data with other financial and macroeconomic indicators.
+  
 THE END.
